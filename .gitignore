@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# MacOS files
+.DS_Store
+
+#Ipynb checkpoints
+.ipynb_checkpoints
+
+#Data
+data
+
+#My makefile
+Makefile
