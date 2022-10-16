@@ -87,7 +87,7 @@ class Simulator():
             if idx != 0:
                 current_return = self._update_value(portfolio, idx)
                 value_portfolio *= (1 + current_return)
-                self.current_return_cache.append(value_portfolio)
+                self.current_return_cache.append(current_return)
 
                 if self.use_wandb:
                     wandb.log({'daily_return' : current_return})
