@@ -55,12 +55,18 @@ class Simulator():
                                           end_date=-1)
         self.test_data_returns = self.test_data.pct_change()
 
+    def get_availiable_assets(self):
+        """
+        Return available assets
+        """
+        return self.datamodule.get_asset_names()
+
 
     def _configure_wandb(self):
         """
         Configure wandb logging
         """
-        if not self.use_wandb:
+        if self.use_wandb:
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
                                         project='CMF-Credit-Derivatives')
@@ -84,7 +90,7 @@ class Simulator():
                 value_portfolio *= (1 + current_return)
                 self.value_portfolio_cache.append(value_portfolio)
 
-                if not self.use_wandb:
+                if self.use_wandb:
                     wandb.log({'daily_return' : current_return})
                     wandb.log({'portfolio_value' : value_portfolio})
                 if self.debug_mode:
@@ -96,8 +102,11 @@ class Simulator():
         final_metrics = self._calculate_final_metrics()
 
         if verbose:
-            print(f'Final value of portfolio {value_portfolio}')
+            print(f'\nFinal value of portfolio {value_portfolio}')
             print(f"Sharpe of the porfolio {final_metrics['sharpe']}")
+
+        if self.use_wandb:
+            wandb.finish()
 
     def _update_value(self, current_portfolio : dict, idx : int) -> float:
         """
@@ -124,7 +133,7 @@ class Simulator():
                           / np.array(self.value_portfolio_cache).std()
 
         final_metrics = {'sharpe' : sharpe}
-        if not self.use_wandb:
+        if self.use_wandb:
             wandb.log(final_metrics)
 
         return final_metrics

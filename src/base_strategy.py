@@ -30,5 +30,9 @@ class BaseStrategy(ABC):
         construction of a portfolio, which must also be in the
         form of dictionary with keys as assets and fractions of
         the portfolio as values
+
+        CAUTION: While the strategy admits the negative allocations,
+        i.e. shortselling, total allocations, including positive and negative
+        weight must not exceed unity.
         """
         raise NotImplementedError('Create strategy logic!')
