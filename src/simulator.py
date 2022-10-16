@@ -36,7 +36,7 @@ class Simulator():
 
         self.test_data_returns = None
 
-        self.value_portfolio_cache = [1,]
+        self.current_return_cache = []
 
         self._configure_simulator()
         self._configure_wandb()
@@ -87,7 +87,7 @@ class Simulator():
             if idx != 0:
                 current_return = self._update_value(portfolio, idx)
                 value_portfolio *= (1 + current_return)
-                self.value_portfolio_cache.append(value_portfolio)
+                self.current_return_cache.append(value_portfolio)
 
                 if self.use_wandb:
                     wandb.log({'daily_return' : current_return})
@@ -117,7 +117,7 @@ class Simulator():
                                       All weights must sum to 1, including the negative allocations!'
 
 
-        current_returns = self.test_data_returns.iloc[idx]
+        current_returns = self.test_data_returns.iloc[idx].to_dict()
         return sum([current_portfolio[asset] * current_returns[asset] \
                                 for asset in current_portfolio.keys()])
 
@@ -126,10 +126,12 @@ class Simulator():
         Calculate the final metrics for the strategy
         reporting
         Metrics calculated:
-        Sharpe
+        Sharpe - calculated as mean of daily returns minus the return of
+        a portfolio consisting of only spx long stock, divided by the
+        standard deviation of daily returns
         """
-        sharpe = (np.array(self.value_portfolio_cache).mean() - 1) \
-                          / np.array(self.value_portfolio_cache).std()
+        sharpe = (np.array(self.current_return_cache).mean() - 0.054458) \
+                          / np.array(self.current_return_cache).std()
 
         final_metrics = {'sharpe' : sharpe}
         if self.use_wandb:
