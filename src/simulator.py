@@ -12,7 +12,6 @@ import wandb
 
 from src.datamodule import DataModule
 
-
 class Simulator():
     """
     Simulator handles all the execution of any strategy
@@ -129,7 +128,7 @@ class Simulator():
         Metrics calculated:
         Sharpe
         """
-        sharpe = np.array(self.value_portfolio_cache).mean() \
+        sharpe = (np.array(self.value_portfolio_cache).mean() - 1) \
                           / np.array(self.value_portfolio_cache).std()
 
         final_metrics = {'sharpe' : sharpe}

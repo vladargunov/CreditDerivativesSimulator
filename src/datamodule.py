@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 
 from typing import Optional, Union
-
 from datetime import date, timedelta
 
 class DataModule():
