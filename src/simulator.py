@@ -130,7 +130,10 @@ class Simulator():
         a portfolio consisting of only spx long stock, divided by the
         standard deviation of daily returns
         """
-        sharpe = (np.array(self.current_return_cache).mean() - 0.054458) \
+        # Calculate a portfolio of investing only in spx
+        mean_spx = self.test_data_returns['spx'].mean()
+
+        sharpe = (np.array(self.current_return_cache).mean() - mean_spx) \
                           / np.array(self.current_return_cache).std()
 
         final_metrics = {'sharpe' : sharpe}
