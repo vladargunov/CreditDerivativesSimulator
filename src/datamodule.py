@@ -36,7 +36,7 @@ class DataModule():
             unzip_data = 'unzip -q data.zip'
             subprocess.run(unzip_data.split(), check=True)
 
-            rename_folder = 'mv cmf_credit_data data'
+            rename_folder = 'mv data_v11 data'
             subprocess.run(rename_folder.split(), check=True)
 
             remove_zip_file = 'rm -r data.zip'
