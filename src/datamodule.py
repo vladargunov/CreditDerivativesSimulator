@@ -18,7 +18,7 @@ class DataModule():
     """
     def __init__(self):
         self.path_data = 'https://www.dropbox.com/s/' + \
-                         'djnwwsdqdk5osaj/cmf_credit_data.zip?dl=0'
+                         'is3bzl047xszdjw/data_v11.zip?dl=0'
         self.asset_names = None
         self.data = None
 
