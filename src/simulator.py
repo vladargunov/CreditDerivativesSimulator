@@ -17,7 +17,7 @@ class Simulator():
     Simulator handles all the execution of any strategy
     inherited from base_strategy
     """
-    def __init__(self, train_test_split_time : str='2013-01-02',
+    def __init__(self, train_test_split_time : str='2019-01-02',
                  use_wandb : bool=True, debug_mode : bool=False,
                  run_name : Optional[str]='SampleStrategy1'):
         self.datamodule = DataModule()
