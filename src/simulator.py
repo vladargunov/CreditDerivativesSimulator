@@ -19,7 +19,13 @@ class Simulator():
     """
     def __init__(self, train_test_split_time : str='2019-01-02',
                  use_wandb : bool=True, debug_mode : bool=False,
-                 run_name : Optional[str]='SampleStrategy1'):
+                 run_name : Optional[str]='SampleStrategy1',
+                 project_name : str='Test'):
+
+        assert project_name in ['Test', 'Final'], \
+        'Specify correct project name! Available options are "Test" and "Final"'
+        self.project_name = project_name
+
         self.datamodule = DataModule()
         self.datamodule.setup()
 
@@ -41,6 +47,8 @@ class Simulator():
 
         self._configure_simulator()
         self._configure_wandb()
+
+
 
 
     def _configure_simulator(self):
@@ -69,7 +77,7 @@ class Simulator():
         if self.use_wandb:
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
-                                        project='CMF-Credit-Derivatives')
+                                        project=self.project_name)
 
     def simulate(self, strategy, verbose: bool=True):
         """
@@ -218,3 +226,10 @@ class Simulator():
         annualised_ret = np.prod(current_value_portfolio) ** (1 / num_days) - 1
 
         return annualised_ret
+
+    def get_training_data(self):
+        """
+        Get training data as used in train_model()
+        function
+        """
+        return self.train_data.copy()
