@@ -17,10 +17,10 @@ class CustomLookBackStrategy(BaseStrategy):
         Set lookback lenght and frequency
         """
         # Define lookback period in days
-        self.lookback_period = 10
+        self.lookback_period = <WRITE YOUR INTEGER>
 
         # Set lookback frequency
-        self.lookback_freq = 252
+        self.lookback_freq = <WRITE YOUR INTEGER>
 
         # Get lookback data
         self.lookback_data = train_data.iloc[-self.lookback_period:]
@@ -32,12 +32,13 @@ class CustomLookBackStrategy(BaseStrategy):
         Trade based on lookback data
         """
         # Place a recent date into self.lookback_data
-        self.lookback_data.append(daily_data, ignore_index=True)
+        self.lookback_data = \
+                    self.lookback_data.append(daily_data, ignore_index=True)
         self.lookback_data = self.lookback_data.iloc[1:]
         # Now you have new lookback data including the latest date
 
         if self.trade_cnt % self.lookback_freq == 0:
-          # Do some code with lookback data here
+          <WRITE YOUR CODE HERE>
           pass
 
         # Update self.trade_cnt
