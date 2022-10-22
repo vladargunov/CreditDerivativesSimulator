@@ -37,6 +37,7 @@ class Simulator():
         self.test_data_returns = None
 
         self.current_return_cache = []
+        self.value_portfolio_cache = []
 
         self._configure_simulator()
         self._configure_wandb()
@@ -87,11 +88,26 @@ class Simulator():
             if idx != 0:
                 current_return = self._update_value(portfolio, idx)
                 value_portfolio *= (1 + current_return)
+                # Append values to cache
                 self.current_return_cache.append(current_return)
+                self.value_portfolio_cache.append(value_portfolio)
+
+                # Compute drawdown over the last 252 days (year) and overall
+                total_drawdown = self.get_max_drawdown()
+                annual_drawdown = self.get_max_drawdown(trailing_days=252)
+
+                # Compute annualised returns over the last 252 days and overall
+                total_ann_ret = self.get_annualised_return()
+                annual_ann_ret = self.get_annualised_return(trailing_days=252)
 
                 if self.use_wandb:
-                    wandb.log({'daily_return' : current_return})
-                    wandb.log({'portfolio_value' : value_portfolio})
+                    wandb.log({'daily_return' : current_return,
+                               'portfolio_value' : value_portfolio,
+                               'drawdown (total)' : total_drawdown,
+                               'drawdown (252 days)' : annual_drawdown,
+                               'annualised_return (total)' : total_ann_ret,
+                               'annualised_return (252 days)' : annual_ann_ret
+                               })
                 if self.debug_mode:
                     break
 
@@ -126,18 +142,79 @@ class Simulator():
         Calculate the final metrics for the strategy
         reporting
         Metrics calculated:
-        Sharpe - calculated as mean of daily returns minus the return of
-        a portfolio consisting of only spx long stock, divided by the
-        standard deviation of daily returns
+        Sharpe
         """
-        # Calculate a portfolio of investing only in spx
-        mean_spx = self.test_data_returns['spx'].mean()
+        final_metrics = {}
 
-        sharpe = (np.array(self.current_return_cache).mean() - mean_spx) \
-                          / np.array(self.current_return_cache).std()
+        final_metrics['sharpe'] = self.get_sharpe()
 
-        final_metrics = {'sharpe' : sharpe}
         if self.use_wandb:
             wandb.log(final_metrics)
 
         return final_metrics
+
+    def get_sharpe(self) -> float:
+        """
+        Sharpe - calculated as mean of daily returns minus the
+        yield treasury curve rate 1month averaged and converted
+        to daily return
+        """
+        # Get risk free rate
+        risk_free_rate = self.datamodule.get_risk_free_rate()
+
+        # Calculate sharpe
+        sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
+                          / np.array(self.current_return_cache).std()
+
+        return sharpe
+
+    def get_max_drawdown(self, trailing_days : Optional[int]=None) -> float:
+        """
+        Calculates the maximum drawdown over the specified
+        trailing days. Trailing days can be None, then the maximum drawdown
+        is computed over all history
+        Formula for it is
+        MDD = (min_value - max_value) / max_value
+        Source:
+        https://www.investopedia.com/terms/m/maximum-drawdown-mdd.asp
+
+        Args:
+        trailing_days - number of days to compute mdd over
+        """
+        if trailing_days is None:
+            current_value_portfolio = self.value_portfolio_cache.copy()
+        else:
+            current_value_portfolio = \
+                            self.value_portfolio_cache[-trailing_days:]
+
+        min_value = min(current_value_portfolio)
+        max_value = max(current_value_portfolio)
+
+        mdd = (min_value - max_value) / max_value
+
+        return mdd
+
+    def get_annualised_return(self, trailing_days : Optional[int]=None) -> float:
+        """
+        Calculates the annualised return over the specified
+        trailing days. Trailing days can be None, then the annualised return
+        is computed over all history
+        Formula for annualised return:
+        annual_return = (1+r_1) * (1+r_2) * ... (1+r_n) ** (1 / n) - 1
+        Source:
+        https://www.investopedia.com/terms/a/annualized-total-return.asp
+        """
+        if trailing_days is None:
+            current_value_portfolio = self.current_return_cache.copy()
+        else:
+            current_value_portfolio = \
+                           self.current_return_cache[-trailing_days:]
+
+        num_days = len(current_value_portfolio)
+
+        # Convert to numpy array and add 1
+        current_value_portfolio = np.array(current_value_portfolio) + 1
+
+        annualised_ret = np.prod(current_value_portfolio) ** (1 / num_days) - 1
+
+        return annualised_ret
