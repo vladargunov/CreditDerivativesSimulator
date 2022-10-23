@@ -18,7 +18,10 @@ class DataModule():
     """
     def __init__(self):
         self.path_data = 'https://www.dropbox.com/s/' + \
-                         'djnwwsdqdk5osaj/cmf_credit_data.zip?dl=0'
+                         'is3bzl047xszdjw/data_v11.zip?dl=0'
+
+        self.path_risk_free_rate = 'https://www.dropbox.com/s/' + \
+                                   'fyeatejqb2zaixs/risk_free_rate.csv?dl=0'
         self.asset_names = None
         self.data = None
 
@@ -36,7 +39,7 @@ class DataModule():
             unzip_data = 'unzip -q data.zip'
             subprocess.run(unzip_data.split(), check=True)
 
-            rename_folder = 'mv cmf_credit_data data'
+            rename_folder = 'mv data_v11 data'
             subprocess.run(rename_folder.split(), check=True)
 
             remove_zip_file = 'rm -r data.zip'
@@ -94,3 +97,45 @@ class DataModule():
             end_date = self.data.index[-1] + timedelta(days=1)
         return self.data[(self.data.index >= start_date) & \
                          (self.data.index < end_date)]
+
+    def get_risk_free_rate(self, start_date : str, end_date : str):
+        """
+        Calculates risk free rate from a file of 1 month yield treasury
+        rates based on a specified interval as an average rate
+        and then converted to daily frequency by formula
+        rate_daily = (1 + rate_monthly) ^ 1 / 365 - 1
+
+        Interval is specified a start_date inclusively and
+        end_date exclusively. Dates should be specified in
+        yyyy-mm-dd format
+
+        Data downloaded from
+        https://fred.stlouisfed.org/series/DGS1MO
+        """
+        # Download file
+        if 'risk_free_rate.csv' not in os.listdir():
+            download_file = f'wget {self.path_risk_free_rate}' + \
+                            ' -O risk_free_rate.csv -q'
+            subprocess.run(download_file.split(), check=True)
+
+        # Read csv into pandas an compute mean risk-free
+        # rate
+        risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
+                           .set_index('DATE')
+
+        # Delete empty values
+        risk_free_data = risk_free_data[risk_free_data['Rate'] != '.']['Rate'] \
+                            .apply(lambda x: float(x)/100)
+
+
+        risk_free_rate = risk_free_data[(risk_free_data.index >= start_date) & \
+                               (risk_free_data.index < end_date)].mean()
+
+        # Convert to daily risk free rate
+        risk_free_rate = (1 + risk_free_rate) ** (1 / 365) - 1
+
+        # Remove file with risk_free_rate.csv
+        remove_file = 'rm risk_free_rate.csv'
+        subprocess.run(remove_file.split(), check=True)
+
+        return risk_free_rate
