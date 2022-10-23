@@ -171,7 +171,7 @@ class Simulator():
         # Get risk free rate
         risk_free_rate = self.datamodule.get_risk_free_rate(
                                         start_date=self.train_test_split_time,
-                                        end_date=str(test_data.index[-1]))
+                                        end_date=str(self.test_data.index[-1]))
 
         # Calculate sharpe
         sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
