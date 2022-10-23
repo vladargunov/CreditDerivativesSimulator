@@ -129,7 +129,7 @@ class DataModule():
 
 
         risk_free_rate = risk_free_data[(risk_free_data.index >= start_date) & \
-                               (risk_free_data.index < end_date)]['Rate'].mean()
+                               (risk_free_data.index < end_date)].mean()
 
         # Convert to daily risk free rate
         risk_free_rate = (1 + risk_free_rate) ** (1 / 365) - 1
