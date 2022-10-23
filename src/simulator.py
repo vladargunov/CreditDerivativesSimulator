@@ -129,6 +129,7 @@ class Simulator():
             print(f"Sharpe of the porfolio {final_metrics['sharpe']}")
 
         if self.use_wandb:
+            print('Process completed!')
             wandb.finish()
 
     def _update_value(self, current_portfolio : dict, idx : int) -> float:
@@ -170,7 +171,7 @@ class Simulator():
         # Get risk free rate
         risk_free_rate = self.datamodule.get_risk_free_rate(
                                         start_date=self.train_test_split_time,
-                                        end_date=-1)
+                                        end_date=str(test_data.index[-1]))
 
         # Calculate sharpe
         sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
