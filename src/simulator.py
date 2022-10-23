@@ -81,7 +81,7 @@ class Simulator():
 
     def simulate(self, strategy, verbose: bool=True):
         """
-        Simulates the strategy according the predefined
+        Simulates a strategy according the predefined
         configuration
         """
 
@@ -168,7 +168,9 @@ class Simulator():
         to daily return
         """
         # Get risk free rate
-        risk_free_rate = self.datamodule.get_risk_free_rate()
+        risk_free_rate = self.datamodule.get_risk_free_rate(
+                                        start_date=self.train_test_split_time,
+                                        end_date=-1)
 
         # Calculate sharpe
         sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
@@ -233,3 +235,13 @@ class Simulator():
         function
         """
         return self.train_data.copy()
+
+
+    def get_test_data(self):
+        """
+        Iterator of test data as
+        given to the simulator,
+        used for testing and debugging
+        """
+        for idx in range(self.test_data.shape[0]):
+            yield self.test_data.iloc[idx].to_dict()
