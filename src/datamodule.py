@@ -124,7 +124,7 @@ class DataModule():
                            .set_index('DATE')
 
         # Delete empty values
-        risk_free_data = risk_free_data[risk_free_data['Rate'] != '.'] \
+        risk_free_data = risk_free_data[risk_free_data['Rate'] != '.']['Rate'] \
                             .apply(lambda x: float(x)/100)
 
 
