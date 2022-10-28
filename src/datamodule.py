@@ -5,11 +5,13 @@ Datamodule class is responsible for extraction and storage of data
 import os
 import subprocess
 
+from datetime import date, timedelta
+
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
-from typing import Optional, Union
-from datetime import date, timedelta
 
 class DataModule():
     """
@@ -58,7 +60,8 @@ class DataModule():
         for asset in self.asset_names:
             path_asset = os.path.join('data', asset + '.csv')
             asset_series = pd.read_csv(path_asset, sep=';', skiprows=1)
-            asset_series['Date'] = asset_series['Date'].apply(lambda x: date(int(x[-4:]), int(x[3:5]), int(x[:2])))
+            asset_series['Date'] = asset_series['Date'] \
+                    .apply(lambda x: date(int(x[-4:]), int(x[3:5]), int(x[:2])))
             asset_series = asset_series.set_index('Date')
             self.data[asset] = asset_series['Last Price'] \
                                .apply(lambda x: float(str(x).replace(',','.')) \

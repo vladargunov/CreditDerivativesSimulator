@@ -33,7 +33,14 @@ class Simulator():
         self.use_wandb = use_wandb and not debug_mode
         self.debug_mode = debug_mode
 
+
         self.train_test_split_time = train_test_split_time
+
+        if project_name == 'Final':
+            self.train_test_split_time = '2019-01-02'
+            print('For project "Final" the train_test_split_time is ' + \
+                  'set at 2019-01-02. If you wish to set another date, ' + \
+                  'use "Test" project')
         self.wandb_run = None
         self.run_name = run_name
 
@@ -94,7 +101,6 @@ class Simulator():
         for idx in tqdm(range(self.test_data.shape[0])):
             current_prices = self.test_data.iloc[idx]
             current_date = self.test_data.index[idx]
-            trailing_date = self.test_data.index[max(0, idx - 252)]
 
             if idx != 0:
                 current_return = self._update_value(portfolio, idx)
@@ -113,6 +119,8 @@ class Simulator():
 
                 # Compute sharpe over the last 252 days and overall
                 total_sharpe = self.get_sharpe(current_date=current_date)
+                # Trailing date is needed for sharpe calculation
+                trailing_date = self.test_data.index[max(0, idx - 252)]
                 annual_sharpe = self.get_sharpe(current_date=current_date,
                                                 trailing_days=252,
                                                 trailing_date=trailing_date)
