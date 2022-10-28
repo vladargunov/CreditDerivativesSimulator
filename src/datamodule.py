@@ -115,7 +115,7 @@ class DataModule():
         """
         # Download file
         if self.risk_free_data is None:
-            if 'risk_free_rate.csv' in os.listdir():
+            if 'risk_free_rate.csv' not in os.listdir():
                 download_file = f'wget {self.path_risk_free_rate}' + \
                                 ' -O risk_free_rate.csv -q'
                 subprocess.run(download_file.split(), check=True)

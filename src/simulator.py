@@ -78,6 +78,7 @@ class Simulator():
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
                                         project=self.project_name)
+            wandb.define_metric("*", step_metric="date")
 
     def simulate(self, strategy, verbose: bool=True):
         """
@@ -124,8 +125,7 @@ class Simulator():
                                'annualised_return (total)' : total_ann_ret,
                                'annualised_return (252 days)' : annual_ann_ret,
                                'sharpe (total)' : total_sharpe,
-                               'sharpe (252 days)' : annual_sharpe,
-                               'date' : current_date
+                               'sharpe (252 days)' : annual_sharpe
                                })
                 if self.debug_mode:
                     break
@@ -164,6 +164,11 @@ class Simulator():
            current_date <- represents the current date needed for risk-free
            interest rate retrieval
            trailing_days <- number of trailing_days to compute the metric over
+           trailing_date <- the date corresponding to the start_date if
+           trailing_days is specified
+        Note that is trailing_days is None or trailing_date is None, the sharpe
+        ratio is calculated assuming all test_history, so for trailing metric
+        one need to specify both trailing_days and trailing_date
         """
         # Get risk free rate
         if trailing_days is None or trailing_date is None:
@@ -171,18 +176,16 @@ class Simulator():
                                             start_date=self.train_test_split_time,
                                             end_date=str(current_date))
 
-            # Calculate sharpe
-            sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
-                              / np.array(self.current_return_cache).std()
+            return_cache = self.current_return_cache
         else:
             risk_free_rate = self.datamodule.get_risk_free_rate(
                                             start_date=str(trailing_date),
                                             end_date=str(current_date))
 
-            # Calculate sharpe
-            trailing_return_cache = self.current_return_cache[-trailing_days:]
-            sharpe = (np.array(trailing_return_cache).mean() - risk_free_rate) \
-                              / np.array(trailing_return_cache).std()
+            return_cache = self.current_return_cache[-trailing_days:]
+
+        sharpe = (np.array(return_cache).mean() - risk_free_rate) \
+                          / np.array(return_cache).std()
         return sharpe
 
     def get_max_drawdown(self, trailing_days : Optional[int]=None) -> float:
