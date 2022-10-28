@@ -125,17 +125,13 @@ class DataModule():
                                .set_index('DATE')
 
             # Delete empty values
-            self.risk_free_data = self.risk_free_data[risk_free_data['Rate'] \
+            self.risk_free_data = self.risk_free_data[self.risk_free_data['Rate'] \
                                 != '.']['Rate'].apply(lambda x: float(x)/100)
 
-        risk_free_rate = self.risk_free_data[(risk_free_data.index \
-                    >= start_date) & (risk_free_data.index < end_date)].mean()
+        risk_free_rate = self.risk_free_data[(self.risk_free_data.index \
+                    >= start_date) & (self.risk_free_data.index < end_date)].mean()
 
         # Convert to daily risk free rate
         risk_free_rate = (1 + risk_free_rate) ** (1 / 365) - 1
-
-        # Remove file with risk_free_rate.csv
-        remove_file = 'rm risk_free_rate.csv'
-        subprocess.run(remove_file.split(), check=True)
 
         return risk_free_rate
