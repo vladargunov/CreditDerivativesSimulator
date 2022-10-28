@@ -24,6 +24,7 @@ class DataModule():
                                    'fyeatejqb2zaixs/risk_free_rate.csv?dl=0'
         self.asset_names = None
         self.data = None
+        self.risk_free_data = None
 
     def setup(self):
         """
@@ -118,18 +119,17 @@ class DataModule():
                             ' -O risk_free_rate.csv -q'
             subprocess.run(download_file.split(), check=True)
 
-        # Read csv into pandas an compute mean risk-free
-        # rate
-        risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
-                           .set_index('DATE')
+            # Read csv into pandas an compute mean risk-free
+            # rate
+            self.risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
+                               .set_index('DATE')
 
-        # Delete empty values
-        risk_free_data = risk_free_data[risk_free_data['Rate'] != '.']['Rate'] \
-                            .apply(lambda x: float(x)/100)
+            # Delete empty values
+            self.risk_free_data = self.risk_free_data[risk_free_data['Rate'] \
+                                != '.']['Rate'].apply(lambda x: float(x)/100)
 
-
-        risk_free_rate = risk_free_data[(risk_free_data.index >= start_date) & \
-                               (risk_free_data.index < end_date)].mean()
+        risk_free_rate = self.risk_free_data[(risk_free_data.index \
+                    >= start_date) & (risk_free_data.index < end_date)].mean()
 
         # Convert to daily risk free rate
         risk_free_rate = (1 + risk_free_rate) ** (1 / 365) - 1

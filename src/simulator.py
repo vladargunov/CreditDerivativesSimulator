@@ -92,6 +92,8 @@ class Simulator():
         # Then test it
         for idx in tqdm(range(self.test_data.shape[0])):
             current_prices = self.test_data.iloc[idx]
+            current_date = self.test_data.index[idx]
+            trailing_date = self.test_data.index[max(0, idx - 252)]
 
             if idx != 0:
                 current_return = self._update_value(portfolio, idx)
@@ -108,13 +110,22 @@ class Simulator():
                 total_ann_ret = self.get_annualised_return()
                 annual_ann_ret = self.get_annualised_return(trailing_days=252)
 
+                # Compute sharpe over the last 252 days and overall
+                total_sharpe = self.get_sharpe(current_date=current_date)
+                annual_sharpe = self.get_sharpe(current_date=current_date,
+                                                trailing_days=252,
+                                                trailing_date=trailing_date)
+
                 if self.use_wandb:
                     wandb.log({'daily_return' : current_return,
                                'portfolio_value' : value_portfolio,
                                'drawdown (total)' : total_drawdown,
                                'drawdown (252 days)' : annual_drawdown,
                                'annualised_return (total)' : total_ann_ret,
-                               'annualised_return (252 days)' : annual_ann_ret
+                               'annualised_return (252 days)' : annual_ann_ret,
+                               'sharpe (total)' : total_sharpe,
+                               'sharpe (252 days)' : annual_sharpe,
+                               'date' : current_date
                                })
                 if self.debug_mode:
                     break
@@ -162,21 +173,35 @@ class Simulator():
 
         return final_metrics
 
-    def get_sharpe(self) -> float:
+    def get_sharpe(self, current_date=None, trailing_days=None,
+                   trailing_date=None) -> float:
         """
         Sharpe - calculated as mean of daily returns minus the
         yield treasury curve rate 1month averaged and converted
         to daily return
+        Args:
+           current_date <- represents the current date needed for risk-free
+           interest rate retrieval
+           trailing_days <- number of trailing_days to compute the metric over
         """
         # Get risk free rate
-        risk_free_rate = self.datamodule.get_risk_free_rate(
-                                        start_date=self.train_test_split_time,
-                                        end_date=str(self.test_data.index[-1]))
+        if trailing_days is None or trailing_date is None:
+            risk_free_rate = self.datamodule.get_risk_free_rate(
+                                            start_date=self.train_test_split_time,
+                                            end_date=str(current_date))
 
-        # Calculate sharpe
-        sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
-                          / np.array(self.current_return_cache).std()
+            # Calculate sharpe
+            sharpe = (np.array(self.current_return_cache).mean() - risk_free_rate) \
+                              / np.array(self.current_return_cache).std()
+        else:
+            risk_free_rate = self.datamodule.get_risk_free_rate(
+                                            start_date=str(trailing_date),
+                                            end_date=str(current_date))
 
+            # Calculate sharpe
+            trailing_return_cache = self.current_return_cache[-trailing_days:]
+            sharpe = (np.array(trailing_return_cache).mean() - risk_free_rate) \
+                              / np.array(trailing_return_cache).std()
         return sharpe
 
     def get_max_drawdown(self, trailing_days : Optional[int]=None) -> float:
