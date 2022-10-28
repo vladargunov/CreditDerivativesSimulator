@@ -85,7 +85,6 @@ class Simulator():
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
                                         project=self.project_name)
-            wandb.define_metric("*", step_metric="date")
 
     def simulate(self, strategy, verbose: bool=True):
         """
