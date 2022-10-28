@@ -133,11 +133,8 @@ class Simulator():
             # Create a portfolio for next step
             portfolio = strategy.trade(daily_data=current_prices.to_dict())
 
-        final_metrics = self._calculate_final_metrics()
-
         if verbose:
             print(f'\nFinal value of portfolio {value_portfolio}')
-            print(f"Sharpe of the porfolio {final_metrics['sharpe']}")
 
         if self.use_wandb:
             print('Process completed!')
@@ -156,22 +153,6 @@ class Simulator():
         current_returns = self.test_data_returns.iloc[idx].to_dict()
         return sum([current_portfolio[asset] * current_returns[asset] \
                                 for asset in current_portfolio.keys()])
-
-    def _calculate_final_metrics(self) -> dict:
-        """
-        Calculate the final metrics for the strategy
-        reporting
-        Metrics calculated:
-        Sharpe
-        """
-        final_metrics = {}
-
-        final_metrics['sharpe'] = self.get_sharpe()
-
-        if self.use_wandb:
-            wandb.log(final_metrics)
-
-        return final_metrics
 
     def get_sharpe(self, current_date=None, trailing_days=None,
                    trailing_date=None) -> float:

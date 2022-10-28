@@ -114,15 +114,16 @@ class DataModule():
         https://fred.stlouisfed.org/series/DGS1MO
         """
         # Download file
-        if 'risk_free_rate.csv' not in os.listdir():
-            download_file = f'wget {self.path_risk_free_rate}' + \
-                            ' -O risk_free_rate.csv -q'
-            subprocess.run(download_file.split(), check=True)
+        if self.risk_free_data is None:
+            if 'risk_free_rate.csv' in os.listdir():
+                download_file = f'wget {self.path_risk_free_rate}' + \
+                                ' -O risk_free_rate.csv -q'
+                subprocess.run(download_file.split(), check=True)
 
-            # Read csv into pandas an compute mean risk-free
-            # rate
+            # Read csv into pandas
             self.risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
-                               .set_index('DATE')
+                                             .set_index('DATE')
+            assert self.risk_free_data is not None, 'Risk-free data is None!'
 
             # Delete empty values
             self.risk_free_data = self.risk_free_data[self.risk_free_data['Rate'] \
