@@ -22,7 +22,7 @@ class Simulator():
                  run_name : Optional[str]='SampleStrategy1',
                  project_name : str='Test'):
 
-        assert project_name in ['Test', 'Final'], \
+        assert project_name in ['Test', 'Final', 'Development'], \
         'Specify correct project name! Available options are "Test" and "Final"'
         self.project_name = project_name
 
@@ -32,7 +32,6 @@ class Simulator():
         # if self.debug_mode = True, then do not log any values
         self.use_wandb = use_wandb and not debug_mode
         self.debug_mode = debug_mode
-
 
         self.train_test_split_time = train_test_split_time
 
@@ -123,15 +122,18 @@ class Simulator():
                                                 trailing_date=trailing_date)
 
                 if self.use_wandb:
-                    wandb.log({'daily_return' : current_return,
-                               'portfolio_value' : value_portfolio,
-                               'drawdown (total)' : total_drawdown,
-                               'drawdown (252 days)' : annual_drawdown,
-                               'annualised_return (total)' : total_ann_ret,
-                               'annualised_return (252 days)' : annual_ann_ret,
-                               'sharpe (total)' : total_sharpe,
-                               'sharpe (252 days)' : annual_sharpe
-                               })
+                    wandb.log({'daily return' : current_return,
+                               'portfolio value' : value_portfolio,
+                               'drawdown' : total_drawdown,
+                               '1Y drawdown' : annual_drawdown,
+                               'annualised_return' : total_ann_ret,
+                               '1Y return' : annual_ann_ret,
+                               'sharpe' : total_sharpe,
+                               '1Y sharpe' : annual_sharpe,
+                               'date' : current_date
+                               },
+                               step=idx)
+                    self._log_portfolio(portfolio, step=idx)
                 if self.debug_mode:
                     break
 
@@ -142,7 +144,7 @@ class Simulator():
             print(f'\nFinal value of portfolio {value_portfolio}')
 
         if self.use_wandb:
-            print('Process completed!')
+            print('Logging completed!')
             wandb.finish()
 
     def _update_value(self, current_portfolio : dict, idx : int) -> float:
@@ -158,6 +160,20 @@ class Simulator():
         current_returns = self.test_data_returns.iloc[idx].to_dict()
         return sum([current_portfolio[asset] * current_returns[asset] \
                                 for asset in current_portfolio.keys()])
+
+    def _log_portfolio(portfolio : dict, step : int):
+        """
+        Log values of the given portfolio
+        """
+        assets = self.get_availiable_assets()
+        logging_values = portfolio.copy()
+        # Add zero values
+        for asset in assets:
+            if asset not in portfolio.keys():
+                logging_values[asset] = 0.0
+        # Log values into wandb
+        wandb.log(logging_values, step=step)
+
 
     def get_sharpe(self, current_date=None, trailing_days=None,
                    trailing_date=None) -> float:
