@@ -56,8 +56,6 @@ class Simulator():
         self._configure_wandb()
 
 
-
-
     def _configure_simulator(self):
         """
         Configure simulator by splitting the
@@ -228,7 +226,7 @@ class Simulator():
         trailing days. Trailing days can be None, then the annualised return
         is computed over all history
         Formula for annualised return:
-        annual_return = (1+r_1) * (1+r_2) * ... (1+r_n) ** (n / 252) - 1
+        annual_return = (1+r_1) * (1+r_2) * ... (1+r_n) ** (252 / n) - 1
         Source:
         https://www.investopedia.com/terms/a/annualized-total-return.asp
         """
@@ -243,7 +241,7 @@ class Simulator():
         # Convert to numpy array and add 1
         current_value_portfolio = np.array(current_value_portfolio) + 1
 
-        annualised_ret = np.prod(current_value_portfolio) ** (num_days / 252) - 1
+        annualised_ret = np.prod(current_value_portfolio) ** (252 / num_days) - 1
 
         return annualised_ret
 
