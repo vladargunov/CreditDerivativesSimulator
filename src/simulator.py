@@ -67,6 +67,14 @@ class Simulator():
                                           end_date=-1)
         self.test_data_returns = self.test_data.pct_change()
 
+        # Create csv file with dates as indices for test data
+        if 'supplementary_data' not in os.listdir():
+            subprocess.run('mkdir supplementary_data'.split(), check=True)
+            
+        pd.DataFrame(self.test_data.index).reset_index(level=0) \
+                   .rename(columns={'index' : 'Step'}) \
+                   .to_csv('supplementary_data/test_data_steps_dates.csv')
+
     def get_availiable_assets(self):
         """
         Return available assets
