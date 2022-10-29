@@ -126,7 +126,7 @@ class Simulator():
                                'portfolio value' : value_portfolio,
                                'drawdown' : total_drawdown,
                                '1Y drawdown' : annual_drawdown,
-                               'annualised_return' : total_ann_ret,
+                               'annualised return' : total_ann_ret,
                                '1Y return' : annual_ann_ret,
                                'sharpe' : total_sharpe,
                                '1Y sharpe' : annual_sharpe,
