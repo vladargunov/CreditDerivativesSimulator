@@ -161,7 +161,7 @@ class Simulator():
         return sum([current_portfolio[asset] * current_returns[asset] \
                                 for asset in current_portfolio.keys()])
 
-    def _log_portfolio(portfolio : dict, step : int):
+    def _log_portfolio(self, portfolio : dict, step : int):
         """
         Log values of the given portfolio
         """
