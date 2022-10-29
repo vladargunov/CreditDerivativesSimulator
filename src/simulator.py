@@ -3,6 +3,9 @@ Simulator deals with executing the agents
 strategy and logging values
 """
 
+import os
+import subprocess
+
 from typing import Optional
 
 import numpy as np
@@ -70,7 +73,7 @@ class Simulator():
         # Create csv file with dates as indices for test data
         if 'supplementary_data' not in os.listdir():
             subprocess.run('mkdir supplementary_data'.split(), check=True)
-            
+
         pd.DataFrame(self.test_data.index).reset_index(level=0) \
                    .rename(columns={'index' : 'Step'}) \
                    .to_csv('supplementary_data/test_data_steps_dates.csv')
