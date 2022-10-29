@@ -76,8 +76,8 @@ class Simulator():
             subprocess.run('mkdir supplementary_data'.split(), check=True)
 
         pd.DataFrame(self.test_data.index).reset_index(level=0) \
-                   .rename(columns={'index' : 'Step'}) \
-                   .to_csv('supplementary_data/test_data_steps_dates.csv')
+            .rename(columns={'index' : 'Step'}) \
+            .to_csv('supplementary_data/test_data_steps_dates.csv', index=False)
 
     def get_availiable_assets(self):
         """
