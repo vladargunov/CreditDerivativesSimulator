@@ -207,7 +207,7 @@ class Simulator():
 
         sharpe_daily = (np.array(return_cache).mean() - risk_free_rate) \
                           / np.array(return_cache).std()
-        sharpe_yearly = sharpe_yearly * (252 ** .5)
+        sharpe_yearly = sharpe_daily * (252 ** .5)
         return sharpe_yearly
 
     def get_max_drawdown(self, trailing_days : Optional[int]=None) -> float:
