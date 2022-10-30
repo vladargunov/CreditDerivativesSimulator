@@ -277,7 +277,7 @@ class Simulator():
         wandb.log(logging_values, step=step)
 
 
-    def get_sharpe(self, current_date=None, trailing_days=None, idx : int,
+    def get_sharpe(self, current_date=None, trailing_days=None, idx : int=1,
                    transaction_costs_flag : bool=False) -> float:
         """
         Sharpe - calculated as mean of daily returns minus the
