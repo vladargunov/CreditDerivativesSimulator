@@ -97,7 +97,7 @@ class Simulator():
         Configure wandb logging
         """
         if self.use_wandb:
-            project_name = self.project_name + '_v1.2'
+            project_name = self.project_name + '_v1-2'
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
                                         project=project_name)
