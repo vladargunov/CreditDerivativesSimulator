@@ -176,22 +176,30 @@ class Simulator():
         metrics = {}
         # Subtract transaction_costs from portfolio
         if transaction_costs is not None:
+            value_portfolio_no_costs = value_portfolio
+
             value_portfolio -= transaction_costs
             metrics['transaction costs'] = transaction_costs
-            transaction_costs_flag = True
-        else:
-            transaction_costs_flag = False
 
+            transaction_costs_flag = True
             self.transaction_costs_cache.append(transaction_costs)
             metrics['accumulated transaction costs'] = \
                                             sum(self.transaction_costs_cache)
 
-        # Compute daily return
-        metrics['daily return'] = self._update_value(portfolio, idx)
+            return_no_costs = self._update_value(portfolio, idx)
 
-        # Compute portfolio valiue
-        value_portfolio *= (1 + metrics['daily return'])
-        metrics['portfolio value'] = value_portfolio
+            value_portfolio *= (1 + return_no_costs)
+
+            metrics['daily return'] = value_portfolio / value_portfolio_no_costs - 1
+
+        else:
+            transaction_costs_flag = False
+
+            # Compute daily return
+            metrics['daily return'] = self._update_value(portfolio, idx)
+            # Compute portfolio valiue
+            value_portfolio *= (1 + metrics['daily return'])
+            metrics['portfolio value'] = value_portfolio
 
         # Append values to cache depending whether it is clean or dirty PnL
         if transaction_costs is None:
