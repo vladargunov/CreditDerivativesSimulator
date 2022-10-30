@@ -22,6 +22,7 @@ class Simulator():
     inherited from base_strategy
     """
     def __init__(self, train_test_split_time : str='2019-01-02',
+                 transaction_costs : float=.003,
                  use_wandb : bool=True, debug_mode : bool=False,
                  run_name : Optional[str]='SampleStrategy1',
                  project_name : str='Test'):
@@ -38,6 +39,7 @@ class Simulator():
         self.debug_mode = debug_mode
 
         self.train_test_split_time = train_test_split_time
+        self.transaction_costs = transaction_costs
 
         if project_name == 'Final':
             self.train_test_split_time = '2019-01-02'
@@ -54,6 +56,10 @@ class Simulator():
 
         self.current_return_cache = []
         self.value_portfolio_cache = []
+
+        self.value_portfolio_cache_with_costs = []
+        self.current_return_cache_with_costs = []
+        self.transaction_costs_cache = []
 
         self._configure_simulator()
         self._configure_wandb()
@@ -83,7 +89,7 @@ class Simulator():
         """
         Return available assets
         """
-        return self.datamodule.get_asset_names()
+        return self.datamodule.get_availiable_assets()
 
 
     def _configure_wandb(self):
@@ -101,56 +107,58 @@ class Simulator():
         configuration
         """
 
-        value_portfolio = 1
         # Firstly train the strategy
         strategy.train_model(train_data=self.train_data)
 
-        # Then test it
+        # Then simulate on test dataset
+        portfolio = None
+        current_transaction_costs = None
+        value_portfolio = 1
+        value_portfolio_with_costs = 1
+
         for idx in tqdm(range(self.test_data.shape[0])):
             current_prices = self.test_data.iloc[idx]
             current_date = self.test_data.index[idx]
 
             if idx != 0:
-                current_return = self._update_value(portfolio, idx)
-                value_portfolio *= (1 + current_return)
-                # Append values to cache
-                self.current_return_cache.append(current_return)
-                self.value_portfolio_cache.append(value_portfolio)
+                # Compute metrics without transaction costs
+                value_portfolio, current_metrics = self._compute_metrics(
+                               portfolio=portfolio, current_date=current_date,
+                               value_portfolio=value_portfolio,
+                               idx=idx, transaction_costs=None)
 
-                # Compute drawdown over the last 252 days (year) and overall
-                total_drawdown = self.get_max_drawdown()
-                annual_drawdown = self.get_max_drawdown(trailing_days=252)
-
-                # Compute annualised returns over the last 252 days and overall
-                total_ann_ret = self.get_annualised_return()
-                annual_ann_ret = self.get_annualised_return(trailing_days=252)
-
-                # Compute sharpe over the last 252 days and overall
-                total_sharpe = self.get_sharpe(current_date=current_date)
-                # Trailing date is needed for sharpe calculation
-                trailing_date = self.test_data.index[max(0, idx - 252)]
-                annual_sharpe = self.get_sharpe(current_date=current_date,
-                                                trailing_days=252,
-                                                trailing_date=trailing_date)
+                # Compute metrics with transaction costs
+                value_portfolio_with_costs, current_metrics_with_costs = \
+                           self._compute_metrics(portfolio=portfolio,
+                           current_date=current_date, idx=idx,
+                           value_portfolio=value_portfolio_with_costs,
+                           transaction_costs=current_transaction_costs)
 
                 if self.use_wandb:
-                    wandb.log({'daily return' : current_return,
-                               'portfolio value' : value_portfolio,
-                               'drawdown' : total_drawdown,
-                               '1Y drawdown' : annual_drawdown,
-                               'annualised return' : total_ann_ret,
-                               '1Y return' : annual_ann_ret,
-                               'sharpe' : total_sharpe,
-                               '1Y sharpe' : annual_sharpe,
-                               'date' : current_date
-                               },
-                               step=idx)
+                    # Log current metrics without transaction costs
+
+                    wandb.log(current_metrics, step=idx)
+
+                    # Log current metrics with transaction costs
+                    current_metrics_with_costs = {key + ' (clean)' : item  \
+                                for key, item in current_metrics_with_costs.items()}
+                    wandb.log(current_metrics_with_costs, step=idx)
+
+                    # Log current portfolio
                     self._log_portfolio(portfolio, step=idx)
                 if self.debug_mode:
                     break
 
             # Create a portfolio for next step
+            if portfolio is not None:
+                previous_portfolio = portfolio
+
             portfolio = strategy.trade(daily_data=current_prices.to_dict())
+
+            # Compute transaction costs
+            current_transaction_costs = self._compute_transaction_costs(
+                                        previous_portfolio=previous_portfolio,
+                                        current_portfolio=portfolio)
 
         if verbose:
             print(f'\nFinal value of portfolio {value_portfolio}')
@@ -158,6 +166,78 @@ class Simulator():
         if self.use_wandb:
             print('Logging completed!')
             wandb.finish()
+
+    def _compute_metrics(self, portfolio : dict, current_date : str, idx : int,
+                 value_portfolio : float, transaction_costs : Optional[float]):
+        """
+        Computes the required metrics to be
+        logged in wandb including transaction costs
+        """
+        metrics = {}
+        # Subtract transaction_costs from portfolio
+        if transaction_costs is not None:
+            value_portfolio -= transaction_costs
+            metrics['transaction costs'] = transaction_costs
+            transaction_costs_flag = True
+        else:
+            transaction_costs_flag = False
+
+            self.transaction_costs_cache.append(transaction_costs)
+            metrics['accumulated transaction costs'] = \
+                                            sum(self.transaction_costs_cache)
+
+        # Compute daily return
+        metrics['daily return'] = self._update_value(portfolio, idx)
+
+        # Compute portfolio valiue
+        value_portfolio *= (1 + metrics['daily return'])
+        metrics['portfolio value'] = value_portfolio
+
+        # Append values to cache depending whether it is clean or dirty PnL
+        if transaction_costs is None:
+            self.value_portfolio_cache.append(metrics['portfolio value'])
+            self.current_return_cache.append(metrics['daily return'])
+        else:
+            self.value_portfolio_cache_with_costs.append(metrics['portfolio value'])
+            self.current_return_cache_with_costs.append(metrics['daily return'])
+
+        # Compute drawdown over the last 252 days (year) and overall
+        metrics['drawdown'] = self.get_max_drawdown(
+                                    transaction_costs_flag=transaction_costs_flag)
+        metrics['1Y drawdown'] = self.get_max_drawdown(trailing_days=252,
+                                    transaction_costs_flag=transaction_costs_flag)
+
+        # Compute annualised returns over the last 252 days and overall
+        metrics['annualised return'] = self.get_annualised_return(
+                                    transaction_costs_flag=transaction_costs_flag)
+        metrics['1Y return'] = self.get_annualised_return(trailing_days=252,
+                                    transaction_costs_flag=transaction_costs_flag)
+
+        # Compute sharpe over the last 252 days and overall
+        metrics['sharpe'] = self.get_sharpe(current_date=current_date,
+                                transaction_costs_flag=transaction_costs_flag)
+        metrics['1Y sharpe'] = self.get_sharpe(current_date=current_date,
+                    trailing_days=252, transaction_costs_flag=transaction_costs_flag)
+
+        # Log current date
+        metrics['date'] = current_date
+
+        return value_portfolio, metrics
+
+
+    def _compute_transaction_costs(self, previous_portfolio : dict,
+                            current_portfolio : dict, value_portfolio : float):
+        """
+        Computes the current transaction costs based on changes from
+        previous_portfolio to current_portfolio
+        """
+        transaction_costs = 0
+        for asset in self.get_asset_names():
+            transaction_costs += abs(current_portfolio.get(asset,0) \
+                                 - previous_portfolio.get(asset,0)) \
+                                 * self.transaction_costs * value_portfolio
+        return transaction_costs
+
 
     def _update_value(self, current_portfolio : dict, idx : int) -> float:
         """
@@ -188,7 +268,7 @@ class Simulator():
 
 
     def get_sharpe(self, current_date=None, trailing_days=None,
-                   trailing_date=None) -> float:
+                   transaction_costs_flag : bool=False) -> float:
         """
         Sharpe - calculated as mean of daily returns minus the
         yield treasury curve rate 1month averaged and converted
@@ -197,32 +277,39 @@ class Simulator():
            current_date <- represents the current date needed for risk-free
            interest rate retrieval
            trailing_days <- number of trailing_days to compute the metric over
-           trailing_date <- the date corresponding to the start_date if
-           trailing_days is specified
-        Note that is trailing_days is None or trailing_date is None, the sharpe
-        ratio is calculated assuming all test_history, so for trailing metric
-        one need to specify both trailing_days and trailing_date
+        Note that if trailing_days is None, the sharpe ratio is calculated
+        assuming all test_history, so for trailing metric one need to
+        specify both trailing_days and trailing_date
         """
         # Get risk free rate
         if trailing_days is None or trailing_date is None:
             risk_free_rate = self.datamodule.get_risk_free_rate(
                                             start_date=self.train_test_split_time,
                                             end_date=str(current_date))
-
-            return_cache = self.current_return_cache
+            if transaction_costs_flag:
+                return_cache = self.current_return_cache_with_costs
+            else:
+                return_cache = self.current_return_cache
         else:
+            # Compute the trailing_date
+            trailing_date = self.test_data.index[max(0, idx - trailing_days)]
+
             risk_free_rate = self.datamodule.get_risk_free_rate(
                                             start_date=str(trailing_date),
                                             end_date=str(current_date))
 
-            return_cache = self.current_return_cache[-trailing_days:]
+            if transaction_costs_flag:
+                return_cache = self.current_return_cache_with_costs[-trailing_days:]
+            else:
+                return_cache = self.current_return_cache[-trailing_days:]
 
         sharpe_daily = (np.array(return_cache).mean() - risk_free_rate) \
                           / np.array(return_cache).std()
         sharpe_yearly = sharpe_daily * (252 ** .5)
         return sharpe_yearly
 
-    def get_max_drawdown(self, trailing_days : Optional[int]=None) -> float:
+    def get_max_drawdown(self, trailing_days : Optional[int]=None,
+                         transaction_costs_flag : bool=False) -> float:
         """
         Calculates the maximum drawdown over the specified
         trailing days. Trailing days can be None, then the maximum drawdown
@@ -235,10 +322,18 @@ class Simulator():
         Args:
         trailing_days - number of days to compute mdd over
         """
+
         if trailing_days is None:
-            current_value_portfolio = self.value_portfolio_cache.copy()
+            if transaction_costs_flag:
+                current_value_portfolio = self.value_portfolio_cache_with_costs.copy()
+            else:
+                current_value_portfolio = self.value_portfolio_cache.copy()
         else:
-            current_value_portfolio = \
+            if transaction_costs_flag:
+                current_value_portfolio = \
+                            self.value_portfolio_cache_with_costs[-trailing_days:]
+            else:
+                current_value_portfolio = \
                             self.value_portfolio_cache[-trailing_days:]
 
         min_value = min(current_value_portfolio)
@@ -248,7 +343,8 @@ class Simulator():
 
         return mdd
 
-    def get_annualised_return(self, trailing_days : Optional[int]=None) -> float:
+    def get_annualised_return(self, trailing_days : Optional[int]=None,
+                              transaction_costs_flag : bool=False) -> float:
         """
         Calculates the annualised return over the specified
         trailing days. Trailing days can be None, then the annualised return
@@ -259,9 +355,16 @@ class Simulator():
         https://www.investopedia.com/terms/a/annualized-total-return.asp
         """
         if trailing_days is None:
-            current_value_portfolio = self.current_return_cache.copy()
+            if transaction_costs_flag:
+                current_value_portfolio = self.current_return_cache_with_costs.copy()
+            else:
+                current_value_portfolio = self.current_return_cache.copy()
         else:
-            current_value_portfolio = \
+            if transaction_costs_flag:
+                urrent_value_portfolio = \
+                           self.current_return_cache_with_costs[-trailing_days:]
+            else:
+                current_value_portfolio = \
                            self.current_return_cache[-trailing_days:]
 
         num_days = len(current_value_portfolio)
