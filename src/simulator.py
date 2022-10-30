@@ -224,9 +224,9 @@ class Simulator():
                                     transaction_costs_flag=transaction_costs_flag)
 
         # Compute sharpe over the last 252 days and overall
-        metrics['sharpe'] = self.get_sharpe(current_date=current_date,
+        metrics['sharpe'] = self.get_sharpe(current_date=current_date, idx=idx,
                                 transaction_costs_flag=transaction_costs_flag)
-        metrics['1Y sharpe'] = self.get_sharpe(current_date=current_date,
+        metrics['1Y sharpe'] = self.get_sharpe(current_date=current_date, idx=idx,
                     trailing_days=252, transaction_costs_flag=transaction_costs_flag)
 
         # Log current date
@@ -277,7 +277,7 @@ class Simulator():
         wandb.log(logging_values, step=step)
 
 
-    def get_sharpe(self, current_date=None, trailing_days=None,
+    def get_sharpe(self, current_date=None, trailing_days=None, idx : int,
                    transaction_costs_flag : bool=False) -> float:
         """
         Sharpe - calculated as mean of daily returns minus the
