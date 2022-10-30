@@ -111,6 +111,7 @@ class Simulator():
         strategy.train_model(train_data=self.train_data)
 
         # Then simulate on test dataset
+        previous_portfolio = None
         portfolio = None
         current_transaction_costs = None
         value_portfolio = 1
