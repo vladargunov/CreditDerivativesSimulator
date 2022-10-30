@@ -160,7 +160,8 @@ class Simulator():
             if previous_portfolio is not None:
                 current_transaction_costs = self._compute_transaction_costs(
                                         previous_portfolio=previous_portfolio,
-                                        current_portfolio=portfolio)
+                                        current_portfolio=portfolio,
+                                        value_portfolio=value_portfolio_with_costs)
 
         if verbose:
             print(f'\nFinal value of portfolio {value_portfolio}')
