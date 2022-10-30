@@ -243,7 +243,7 @@ class Simulator():
         previous_portfolio to current_portfolio
         """
         transaction_costs = 0
-        for asset in self.get_asset_names():
+        for asset in self.get_available_assets():
             transaction_costs += abs(current_portfolio.get(asset,0) \
                                  - previous_portfolio.get(asset,0)) \
                                  * self.transaction_costs * value_portfolio
