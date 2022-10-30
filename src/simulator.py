@@ -192,6 +192,7 @@ class Simulator():
             return_no_costs = self._update_value(portfolio, idx)
 
             value_portfolio *= (1 + return_no_costs)
+            metrics['portfolio value'] = value_portfolio
 
             metrics['daily return'] = value_portfolio / value_portfolio_no_costs - 1
 
