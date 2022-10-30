@@ -292,7 +292,7 @@ class Simulator():
         specify both trailing_days and trailing_date
         """
         # Get risk free rate
-        if trailing_days is None or trailing_date is None:
+        if trailing_days is None:
             risk_free_rate = self.datamodule.get_risk_free_rate(
                                             start_date=self.train_test_split_time,
                                             end_date=str(current_date))
