@@ -111,7 +111,7 @@ class Simulator():
         strategy.train_model(train_data=self.train_data)
 
         # Then simulate on test dataset
-        previous_portfolio = None
+        previous_portfolio = {}
         portfolio = None
         current_transaction_costs = None
         value_portfolio = 1
@@ -151,14 +151,13 @@ class Simulator():
                     break
 
             # Create a portfolio for next step
-            if portfolio is not None:
+            if idx != 0:
                 previous_portfolio = portfolio
 
             portfolio = strategy.trade(daily_data=current_prices.to_dict())
 
             # Compute transaction costs
-            if previous_portfolio is not None:
-                current_transaction_costs = self._compute_transaction_costs(
+            current_transaction_costs = self._compute_transaction_costs(
                                         previous_portfolio=previous_portfolio,
                                         current_portfolio=portfolio,
                                         value_portfolio=value_portfolio_with_costs)
