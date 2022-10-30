@@ -89,7 +89,7 @@ class Simulator():
         """
         Return available assets
         """
-        return self.datamodule.get_available_assets()
+        return self.datamodule.get_asset_names()
 
 
     def _configure_wandb(self):
