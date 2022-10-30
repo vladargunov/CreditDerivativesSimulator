@@ -373,7 +373,7 @@ class Simulator():
                 current_value_portfolio = self.current_return_cache.copy()
         else:
             if transaction_costs_flag:
-                urrent_value_portfolio = \
+                current_value_portfolio = \
                            self.current_return_cache_with_costs[-trailing_days:]
             else:
                 current_value_portfolio = \
