@@ -156,7 +156,8 @@ class Simulator():
             portfolio = strategy.trade(daily_data=current_prices.to_dict())
 
             # Compute transaction costs
-            current_transaction_costs = self._compute_transaction_costs(
+            if previous_portfolio is not None:
+                current_transaction_costs = self._compute_transaction_costs(
                                         previous_portfolio=previous_portfolio,
                                         current_portfolio=portfolio)
 
