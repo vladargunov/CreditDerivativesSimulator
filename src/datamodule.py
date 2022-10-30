@@ -5,11 +5,13 @@ Datamodule class is responsible for extraction and storage of data
 import os
 import subprocess
 
+from datetime import date, timedelta
+
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
-from typing import Optional, Union
-from datetime import date, timedelta
 
 class DataModule():
     """
@@ -24,6 +26,7 @@ class DataModule():
                                    'fyeatejqb2zaixs/risk_free_rate.csv?dl=0'
         self.asset_names = None
         self.data = None
+        self.risk_free_data = None
 
     def setup(self):
         """
@@ -57,7 +60,8 @@ class DataModule():
         for asset in self.asset_names:
             path_asset = os.path.join('data', asset + '.csv')
             asset_series = pd.read_csv(path_asset, sep=';', skiprows=1)
-            asset_series['Date'] = asset_series['Date'].apply(lambda x: date(int(x[-4:]), int(x[3:5]), int(x[:2])))
+            asset_series['Date'] = asset_series['Date'] \
+                    .apply(lambda x: date(int(x[-4:]), int(x[3:5]), int(x[:2])))
             asset_series = asset_series.set_index('Date')
             self.data[asset] = asset_series['Last Price'] \
                                .apply(lambda x: float(str(x).replace(',','.')) \
@@ -113,29 +117,25 @@ class DataModule():
         https://fred.stlouisfed.org/series/DGS1MO
         """
         # Download file
-        if 'risk_free_rate.csv' not in os.listdir():
-            download_file = f'wget {self.path_risk_free_rate}' + \
-                            ' -O risk_free_rate.csv -q'
-            subprocess.run(download_file.split(), check=True)
+        if self.risk_free_data is None:
+            if 'risk_free_rate.csv' not in os.listdir():
+                download_file = f'wget {self.path_risk_free_rate}' + \
+                                ' -O risk_free_rate.csv -q'
+                subprocess.run(download_file.split(), check=True)
 
-        # Read csv into pandas an compute mean risk-free
-        # rate
-        risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
-                           .set_index('DATE')
+            # Read csv into pandas
+            self.risk_free_data = pd.read_csv('risk_free_rate.csv', sep=',') \
+                                             .set_index('DATE')
+            assert self.risk_free_data is not None, 'Risk-free data is None!'
 
-        # Delete empty values
-        risk_free_data = risk_free_data[risk_free_data['Rate'] != '.']['Rate'] \
-                            .apply(lambda x: float(x)/100)
+            # Delete empty values
+            self.risk_free_data = self.risk_free_data[self.risk_free_data['Rate'] \
+                                != '.']['Rate'].apply(lambda x: float(x)/100)
 
-
-        risk_free_rate = risk_free_data[(risk_free_data.index >= start_date) & \
-                               (risk_free_data.index < end_date)].mean()
+        risk_free_rate = self.risk_free_data[(self.risk_free_data.index \
+                    >= start_date) & (self.risk_free_data.index < end_date)].mean()
 
         # Convert to daily risk free rate
         risk_free_rate = (1 + risk_free_rate) ** (1 / 365) - 1
-
-        # Remove file with risk_free_rate.csv
-        remove_file = 'rm risk_free_rate.csv'
-        subprocess.run(remove_file.split(), check=True)
 
         return risk_free_rate
