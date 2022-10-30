@@ -100,7 +100,7 @@ class Simulator():
             project_name = self.project_name + '_v1.2'
             self.wandb_run = wandb.init(reinit=True, name=self.run_name,
                                         entity="cmf-credit-derivatives",
-                                        project=self.project_name)
+                                        project=project_name)
 
     def simulate(self, strategy, verbose: bool=True):
         """
