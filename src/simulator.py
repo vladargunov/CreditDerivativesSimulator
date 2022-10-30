@@ -22,7 +22,7 @@ class Simulator():
     inherited from base_strategy
     """
     def __init__(self, train_test_split_time : str='2019-01-02',
-                 transaction_costs : float=.003,
+                 transaction_costs : float=.0005,
                  use_wandb : bool=True, debug_mode : bool=False,
                  run_name : Optional[str]='SampleStrategy1',
                  project_name : str='Test'):
@@ -43,9 +43,11 @@ class Simulator():
 
         if project_name == 'Final':
             self.train_test_split_time = '2019-01-02'
+            self.transaction_costs = 0.0005
             print('For project "Final" the train_test_split_time is ' + \
-                  'set at 2019-01-02. If you wish to set another date, ' + \
+                  'set at 2019-01-02 and transaction costs are set at 0.5%. If you wish to set another date or costs, ' + \
                   'use "Test" project')
+            
         self.wandb_run = None
         self.run_name = run_name
 
