@@ -85,11 +85,11 @@ class Simulator():
             .rename(columns={'index' : 'Step'}) \
             .to_csv('supplementary_data/test_data_steps_dates.csv', index=False)
 
-    def get_availiable_assets(self):
+    def get_available_assets(self):
         """
         Return available assets
         """
-        return self.datamodule.get_availiable_assets()
+        return self.datamodule.get_available_assets()
 
 
     def _configure_wandb(self):
@@ -265,7 +265,7 @@ class Simulator():
         """
         Log values of the given portfolio
         """
-        assets = self.get_availiable_assets()
+        assets = self.get_available_assets()
         logging_values = portfolio.copy()
         # Add zero values
         for asset in assets:
