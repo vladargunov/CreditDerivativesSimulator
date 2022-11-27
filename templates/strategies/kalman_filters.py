@@ -42,7 +42,7 @@ class SimpleKalmanFilter(BaseStrategy):
             means, covariances = kalman.filter(ratio.values)
             means, covariances = kalman.smooth(ratio.values)
             means, covariances = means.squeeze(), covariances.squeeze()
-            # Get Pirson's correlation coeficient between two assets
+            # Get Pearson's correlation coeficient between two assets
             data['ratio'] = data['spx']/data['er_cdx_ig_long']
             data['mean'] = means
             data['deviations_spx'] = (data['spx'] - data['mean'])**2
