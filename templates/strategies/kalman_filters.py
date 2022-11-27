@@ -42,8 +42,9 @@ class SimpleKalmanFilter(BaseStrategy):
             means, covariances = kalman.filter(ratio.values)
             means, covariances = kalman.smooth(ratio.values)
             means, covariances = means.squeeze(), covariances.squeeze()
-            # Get Pearson's correlation coeficient between two assets
-            data['ratio'] = data['spx']/data['er_cdx_ig_long']
+            
+            # Get ratio and Pearson's correlation coeficient between two assets
+            data['ratio'] = abs(data['spx']/data['er_cdx_ig_long'])/100
             data['mean'] = means
             data['deviations_spx'] = (data['spx'] - data['mean'])**2
             data['deviations_er_cdx_ig_long'] = (data['spx'] - data['mean'])**2
@@ -53,16 +54,26 @@ class SimpleKalmanFilter(BaseStrategy):
             data['corr'] = data['covariance']/np.sqrt(data['variances_spx']*data['variances_er_cdx_ig_long'])
 
             """ If coeficient of correlation is in [-0.5; 0.5], we give the assets the 'minimal' weights.
-            If it's not, we give assets weights, which depend on the ratio of assets"""
+            If it's not, we give assets weights, depending on the ratio of assets"""
             for i in range (data.shape[0]):
                 if data['corr'].iloc[i] < 0.5 and data['corr'].iloc[i] > -0.5:
-                    self.portfolio = {'spx': .1, 'er_cdx_ig_long': -.1}
+                    k = round(data['ratio'].iloc[i],1)
+                    if k <= 1:
+                      self.portfolio = {'spx': 1-k, 'er_cdx_ig_long': k}
+                    else:
+                      k = 1/k
+                      self.portfolio = {'spx': k, 'er_cdx_ig_long': 1-k}
                 elif data['corr'].iloc[i] >= 0.5:
-                    self.portfolio = {'spx': .3, 'er_cdx_ig_long': -10/(round(data['ratio'].iloc[i],1))}
+                    self.portfolio = {'spx': .5, 'er_cdx_ig_long': -.5}
                 elif data['corr'].iloc[i] <= -0.5:
-                    self.portfolio = {'spx': -.3, 'er_cdx_ig_long': 10/(round(data['ratio'].iloc[i],1))}
+                    self.portfolio = {'spx': -.5, 'er_cdx_ig_long': .5}
                 else:
-                    self.portfolio = {'er_cdx_ig_long' : -.1, 'spx' : .1}
+                    k = round(data['ratio'].iloc[i],1)
+                    if k <= 1:
+                      self.portfolio = {'spx': -1+k, 'er_cdx_ig_long': -k}
+                    else:
+                      k = 1/k
+                      self.portfolio = {'spx': -k, 'er_cdx_ig_long': -1+k}
 
         self.trade_cnt += 1
         return self.portfolio
