@@ -67,13 +67,6 @@ class SimpleKalmanFilter(BaseStrategy):
                     self.portfolio = {'spx': .5, 'er_cdx_ig_long': -.5}
                 elif data['corr'].iloc[i] <= -0.5:
                     self.portfolio = {'spx': -.5, 'er_cdx_ig_long': .5}
-                else:
-                    k = round(data['ratio'].iloc[i],1)
-                    if k <= 1:
-                      self.portfolio = {'spx': -1+k, 'er_cdx_ig_long': -k}
-                    else:
-                      k = 1/k
-                      self.portfolio = {'spx': -k, 'er_cdx_ig_long': -1+k}
 
         self.trade_cnt += 1
         return self.portfolio
