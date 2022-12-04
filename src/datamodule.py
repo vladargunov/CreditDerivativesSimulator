@@ -55,6 +55,7 @@ class DataModule():
         # Create available asset names
         self.asset_names = [asset[:-4] for asset in os.listdir('data') \
                             if not (asset.startswith('.') or asset.startswith('_'))]
+        self.asset_names = ['vix'] + self.asset_names
         # Create dataframe with assets as columns
         self.data = pd.DataFrame()
         for asset in self.asset_names:
