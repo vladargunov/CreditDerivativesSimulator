@@ -12,6 +12,8 @@ class SimpleKalmanFilter(BaseStrategy):
         self.lookback_data = train_data.iloc[-self.lookback_period:]
 
         self.trade_cnt = 0
+
+        self.traded_assets = ['er_cdx_ig_long', 'spx']
         
     def trade(self, daily_data : dict) -> dict:
 
@@ -24,17 +26,18 @@ class SimpleKalmanFilter(BaseStrategy):
 
         # Check for any nan values resulted from missing data and interpolate them
         if self.lookback_data.isnull().values.any():
-            self.lookback_data = self.lookback_data \
+            self.lookback_data[self.traded_assets] = self.lookback_data[self.traded_assets] \
                                         .interpolate(method='polynomial', order=1)
 
         # Delete the latest value from lookback data
         self.lookback_data = self.lookback_data.iloc[1:]
 
+        
         if self.trade_cnt % self.lookback_freq == 0:
             # Get copy of data from lookback for easier work
             data = self.lookback_data[['er_cdx_ig_long', 'spx']].copy()
             # Get a ratio of two assets for their portfolio weights
-            ratio = data['spx']/data['er_cdx_ig_long']
+            ratio = data['spx']/data['er_cdx_ig_long'].fillna(data['spx'])
 
             # We will use UnscentedKalmanFilter() class from pykalman library
             kalman = UnscentedKalmanFilter()
@@ -69,4 +72,5 @@ class SimpleKalmanFilter(BaseStrategy):
                     self.portfolio = {'spx': -.5, 'er_cdx_ig_long': .5}
 
         self.trade_cnt += 1
+        #print(self.portfolio)
         return self.portfolio
