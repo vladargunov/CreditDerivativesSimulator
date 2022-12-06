@@ -1,6 +1,7 @@
 """
 PCA strategy developed by
 Ivan Alpatov
+Github: ialpatov
 """
 
 class PCA_strategy(BaseStrategy):
