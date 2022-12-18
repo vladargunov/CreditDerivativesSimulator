@@ -55,12 +55,12 @@ class DataModule():
             print('...Data Download Completed...')
 
         # Create available asset names
-        if  base_asset in self.asset_names:
+        if  self.base_asset in self.asset_names:
             self.asset_names = [asset[:-4] for asset in os.listdir('data') \
                                 if not (asset.startswith('.') or asset.startswith('_'))]
-            if base_asset is not None:
-                self.asset_names.remove(base_asset)
-                self.asset_names = [base_asset] + self.asset_names
+            if self.base_asset is not None:
+                self.asset_names.remove(self.base_asset)
+                self.asset_names = [self.base_asset] + self.asset_names
 
         else:
             raise KeyError('Such base asset does not exist.')
