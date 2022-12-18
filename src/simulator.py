@@ -23,6 +23,7 @@ class Simulator():
     """
     def __init__(self, train_test_split_time : str='2019-01-02',
                  transaction_costs : float=.0005,
+                 base_asset : str='spx',
                  use_wandb : bool=True, debug_mode : bool=False,
                  run_name : Optional[str]='SampleStrategy1',
                  project_name : str='Test'):
@@ -31,7 +32,7 @@ class Simulator():
         'Specify correct project name! Available options are "Test" and "Final"'
         self.project_name = project_name
 
-        self.datamodule = DataModule()
+        self.datamodule = DataModule(base_asset=base_asset)
         self.datamodule.setup()
 
         # if self.debug_mode = True, then do not log any values
