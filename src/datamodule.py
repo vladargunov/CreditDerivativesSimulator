@@ -18,7 +18,7 @@ class DataModule():
     Extracts data from dropbox and creates a pandas DataFrame with
     all assets as columns and Date as index
     """
-    def __init__(self):
+    def __init__(self, base_asset=None):
         self.path_data = 'https://www.dropbox.com/s/' + \
                          'is3bzl047xszdjw/data_v11.zip?dl=0'
 
@@ -27,6 +27,8 @@ class DataModule():
         self.asset_names = None
         self.data = None
         self.risk_free_data = None
+
+        self.base_asset = base_asset
 
     def setup(self):
         """
@@ -53,9 +55,16 @@ class DataModule():
             print('...Data Download Completed...')
 
         # Create available asset names
-        self.asset_names = [asset[:-4] for asset in os.listdir('data') \
-                            if not (asset.startswith('.') or asset.startswith('_'))]
-        self.asset_names = ['vix'] + self.asset_names
+        if  base_asset in self.asset_names:
+            self.asset_names = [asset[:-4] for asset in os.listdir('data') \
+                                if not (asset.startswith('.') or asset.startswith('_'))]
+            if base_asset is not None:
+                self.asset_names.remove(base_asset)
+                self.asset_names = [base_asset] + self.asset_names
+
+        else:
+            raise KeyError('Such base asset does not exist.')
+
         # Create dataframe with assets as columns
         self.data = pd.DataFrame()
         for asset in self.asset_names:
