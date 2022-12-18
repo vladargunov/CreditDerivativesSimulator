@@ -75,6 +75,9 @@ class DataModule():
             self.data[asset] = asset_series['Last Price'] \
                                .apply(lambda x: float(str(x).replace(',','.')) \
                                if isinstance(x, (float, str)) else np.nan)
+            # dropna values for base asset to ensure no nan values from empty cells
+            if asset = self.base_asset:
+                self.data = self.data.dropna()
 
         # Reverse data <- latest date if first row,
         # closest date <- last row
