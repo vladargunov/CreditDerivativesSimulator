@@ -43,10 +43,8 @@ class Simulator():
         self.transaction_costs = transaction_costs
 
         if project_name == 'Final':
-            self.train_test_split_time = '2019-01-02'
             self.transaction_costs = 0.0005
-            print('For project "Final" the train_test_split_time is ' + \
-                  'set at 2019-01-02 and transaction costs are set at 0.5%. If you wish to set another date or costs, ' + \
+            print('Transaction costs are set at 0.5%. If you wish to set another date or costs, ' + \
                   'use "Test" project')
 
         self.wandb_run = None
@@ -81,8 +79,10 @@ class Simulator():
         self.test_data_returns = self.test_data.pct_change()
 
         # Create csv file with dates as indices for test data
-        if 'supplementary_data' not in os.listdir():
-            subprocess.run('mkdir supplementary_data'.split(), check=True)
+        if 'supplementary_data' in os.listdir():
+            subprocess.run('rm -r supplementary_data'.split(), check=True)
+
+        subprocess.run('mkdir supplementary_data'.split(), check=True)
 
         pd.DataFrame(self.test_data.index).reset_index(level=0) \
             .rename(columns={'index' : 'Step'}) \
